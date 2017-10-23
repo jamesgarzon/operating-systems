@@ -2,16 +2,24 @@
 #include<stdlib.h>
 #include <pthread.h>
 #include <math.h>
+#include <sys/time.h>
+#include <string.h>
 
-int main() {
+int main( int argc, char *argv[]) {
 
+  if( argc != 3 ) {
+     printf("Error con la cantidad de argumentos\n");
+     return 0;
+  }
+  printf("%s\n", argv[1]);
+  printf("%s\n", argv[2]);
   int* vec1;
   int* vec2;
   int i=0;
   int total = 0;
   int n_entries = 0;
-  char file_name1[] = "vec_10_3_a.txt";
-  char file_name2[] = "vec_10_3_b.txt";
+  char *file_name1 = argv[1];
+  char *file_name2 = argv[2];
   int base = 0;
   int exponent = 0;
   char baseText[5];
@@ -47,10 +55,15 @@ int main() {
   while (fscanf(in_file2, "%d", &vec2[i])  != EOF){
     i++;
   }
-
+  struct timeval start, end;
+  gettimeofday(&start, NULL);
   for (i = 0; i < n_entries; i++) {
     total += vec1[i]*vec2[i];
   }
+
+  gettimeofday(&end, NULL);
+  unsigned int t = end.tv_usec - start.tv_usec;
+  printf("Time elapsed:%lf\n", (double)t / 1000);
 
   printf("\n Total: %d\n", total);
 
