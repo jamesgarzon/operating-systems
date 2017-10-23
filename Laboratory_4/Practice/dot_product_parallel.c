@@ -2,7 +2,7 @@
 #include<stdlib.h>
 #include <pthread.h>
 #include <math.h>
-
+#include <sys/time.h>
 // Struct to pass params to the thread
 struct threadParam {
   int *vec1;
@@ -21,21 +21,31 @@ void* multiply(void* parametros){
   for (int i = start; i < end; i++) {
     p->total += vec1[i]*vec2[i];
   }
+  printf("custom total: %d\n", p->total);
    return NULL;
 }
+int main(int argc, char *argv[]) {
 
-int main() {
+  if( argc != 4 ) {
+     printf("Error con el numero de argumentos\n");
+     return 0;
+  }
 
+  int n_threads = atoi(argv[3]);
+  char *file_name1 = argv[1];
+  char *file_name2 = argv[2];
   int* vec1;
   int* vec2;
   int i=0;
   int n_entries = 0;
-  char file_name1[] = "vec_10_1_a.txt";
-  char file_name2[] = "vec_10_1_b.txt";
+  // char file_name1[] = "vec_10_8_a.txt";
+  // char file_name2[] = "vec_10_8_b.txt";
   int base = 0;
   int exponent = 0;
   char baseText[5];
   char exponentText[5];
+  int total = 0;
+
 
   FILE *in_file1;
   FILE *in_file2;
@@ -62,32 +72,32 @@ int main() {
     i++;
   }
 
-//////////////////
-  pthread_t id_thread_1;
-  pthread_t id_thread_2;
-  struct threadParam thread_1_param;
-  struct threadParam thread_2_param;
+  pthread_t id_threads[n_threads];
+  struct threadParam threads_params[n_threads];
+  struct timeval start, end;
 
-  thread_1_param.vec1 = vec1;
-  thread_1_param.vec2 = vec2;
-  thread_1_param.start = 0;
-  thread_1_param.end = n_entries/2;
-  thread_1_param.total = 0;
-  pthread_create(&id_thread_1, NULL, &multiply, &thread_1_param);
+    gettimeofday(&start, NULL);
 
-  thread_2_param.vec1 = vec1;
-  thread_2_param.vec2 = vec2;
-  thread_2_param.start = n_entries/2;
-  thread_2_param.end = n_entries;
-  thread_2_param.total = 0;
+  for (i = 0; i < n_threads; i++) {
+    (threads_params[i]).vec1 = vec1;
+    (threads_params[i]).vec2 = vec2;
+    (threads_params[i]).start = i * (n_entries/n_threads);
+    (threads_params[i]).end = (i + 1) * (n_entries/n_threads);
+    (threads_params[i]).total = 0;
+    pthread_create(&(id_threads[i]), NULL, &multiply, &(threads_params[i]));
+  }
 
-  pthread_create(&id_thread_2, NULL, &multiply, &thread_2_param);
+  for ( i = 0; i < n_threads; i++) {
+    pthread_join (id_threads[i], NULL);
+  }
 
-  pthread_join (id_thread_1, NULL);
-  pthread_join (id_thread_2, NULL);
-  printf("\n Total1: %d\n", thread_1_param.total);
-  printf("\n Total2: %d\n", thread_2_param.total);
-  printf("\n Grand Total: %d\n", thread_1_param.total +thread_2_param.total);
+  for ( i = 0; i < n_threads; i++) {
+    total += threads_params[i].total;
+  }
+  gettimeofday(&end, NULL);
+  unsigned int t = end.tv_usec - start.tv_usec;
+  printf("Time:%lf\n", (double)t / 1000);
+  printf("\n Total: %d\n", total);
 
 
   return 0;
